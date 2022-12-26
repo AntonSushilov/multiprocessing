@@ -5,8 +5,9 @@ import pandas as pd
 import random
 from tqdm import tqdm
 
-def det_data(path, col_name=None):
-    if col_name:
+
+def get_data(path: str, col_name: str=None):
+    if not col_name is None:
         return pd.read_excel(path)[col_name].to_list()
     else:
         return pd.read_excel(path)
@@ -48,7 +49,7 @@ if __name__ == "__main__":
     print(active_children())
     path = "test_file.xlsx"
     col_name = "Стих"
-    data = det_data(path, col_name=col_name)
+    data = get_data(path, col_name=col_name)
     #pd.DataFrame(columns=["text1", "text2"]).to_excel("df_res.xlsx", index=False)
     lock = Lock()
     q = Queue()
@@ -56,6 +57,7 @@ if __name__ == "__main__":
     print(active_children())
     proc_creator_queue.start()
     print(active_children())
+    # TODO(yurass130@gmail.com) try rewrite to parallel doing creating_queue and processing to make programm more stable.
     proc_creator_queue.join()
     # while True:
     #     time.sleep(1)
