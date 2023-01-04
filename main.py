@@ -1,4 +1,4 @@
-from multiprocessing import Process, current_process, active_children, Queue, Lock, Manager
+from multiprocessing import Process, current_process, active_children, Queue, RLock, Manager
 import os
 import time
 import pandas as pd
@@ -24,13 +24,9 @@ def creator_queue(data, q):
     print("Очередь создана")
 
 
-def my_func(q, res_list, lock):
+def my_func(q, res_list, rlock):
     while True:
-        if q.empty():
-            print(f'Queue is empty. {current_process().name} is close')
-            break
-        else:
-            lock.acquire()
+        with rlock:
             try:
                 print(f'start get data {current_process().name}')
                 data = q.get()
@@ -39,9 +35,6 @@ def my_func(q, res_list, lock):
                 #time.sleep(int(current_process().name))
             except Exception as ex:
                 print(f"Ошибка {ex}. {current_process().name}")
-            finally:
-                pass
-                lock.release()
 
 RES_LIST = []
 if __name__ == "__main__":
@@ -50,7 +43,7 @@ if __name__ == "__main__":
     col_name = "Стих"
     data = det_data(path, col_name=col_name)
     #pd.DataFrame(columns=["text1", "text2"]).to_excel("df_res.xlsx", index=False)
-    lock = Lock()
+    rlock = RLock()
     q = Queue()
     proc_creator_queue = Process(target=creator_queue, args=(data, q), name="Process_creator_Qoueue", daemon=True)
     print(active_children())
@@ -67,8 +60,9 @@ if __name__ == "__main__":
     procs = []
     with Manager() as manager:
         res_list = manager.list()
+
         for index in range(processes):
-            proc = Process(target=my_func, args=(q, res_list, lock), name=f"{index}", daemon=True)
+            proc = Process(target=my_func, args=(q, res_list, rlock), name=f"{index}", daemon=True)
             procs.append(proc)
             proc.start()
 
